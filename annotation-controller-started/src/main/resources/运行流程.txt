@@ -1,0 +1,7 @@
+1、HandlerMapping实现：
+使用DefaultAnnotationHandlerMapping（spring3.1之前）或RequestMappingHandlerMapping（spring3.1）替换之前的BeanNameUrlHandlerMapping。
+注解式处理器映射会扫描spring容器中的bean，发现bean实现类上拥有@Controller或@RequestMapping注解的bean，并将它们作为处理器。
+
+2、HandlerAdapter实现：
+使用AnnotationMethodHandlerAdapter（spring3.1之前）或RequestMappingHandlerAdapter（spring3.1）替换之前的SimpleControllerHandlerAdapter。
+注解式处理器适配器会通过反射调用相应的功能处理方法（方法上拥有@RequestMapping注解）。

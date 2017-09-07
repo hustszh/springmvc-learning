@@ -1,0 +1,1 @@
+WebContentGenerator用于提供如浏览器缓存控制、是否必须有session开启、支持的请求方法类型（GET、POST等）等

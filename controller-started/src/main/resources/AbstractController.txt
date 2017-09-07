@@ -1,0 +1,2 @@
+AbstractController实现了Controller，并继承了WebContentGenerator。
+它实现了一些特殊功能，如继承了WebContentGenerator缓存控制功能，并提供了可选的会话的串行化访问功能。而且提供了handleRequestInternal方法，因此我们应该在具体的控制器类中实现handleRequestInternal方法，而不再是handleRequest。

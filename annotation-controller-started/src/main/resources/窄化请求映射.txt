@@ -1,0 +1,1 @@
+窄化请求映射可以认为是方法级别的@RequestMapping继承类级别的@RequestMapping。

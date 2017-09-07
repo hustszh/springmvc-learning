@@ -1,0 +1,4 @@
+支持新的@Contoller和@RequestMapping注解支持类：
+处理器映射RequestMappingHandlerMapping 和 处理器适配器RequestMappingHandlerAdapter组合来代替
+Spring2.5开始的处理器映射DefaultAnnotationHandlerMapping和处理器适配器AnnotationMethodHandlerAdapter，
+提供更多的扩展点。

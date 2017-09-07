@@ -1,0 +1,15 @@
+字符集设置优先级：
+1.header：Content-Type的charset参数。
+如“Content-Type:application/json;charset=GBK”,则得到的编码为“GBK”。
+2.filter：CharacterEncodingFilter
+如果你设置过滤器（CharacterEncodingFilter）则得到它设置的编码。
+3.
+否则返回null。
+
+影响页面字符集的方式主要下面几种方式:
+1.文件的编码方式
+2.Apache2的默认字符集设置
+3.PHP.ini中的默认字符集的设置
+4.PHP脚本中手动输出header(‘Content-type:text/html;charset=xxx’);
+5.html页面中加入
+php.ini默认字符集设置 > header函数字符集设置 > apache2默认字符集设置 > meta标签字符集设置

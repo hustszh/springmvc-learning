@@ -1,0 +1,49 @@
+BaseCommandController，是一个命令控制器通用基类，提供了以下功能支持：
+1、数据绑定：请求参数绑定到一个command object（命令对象，非GoF里的命令设计模式），这里的命令对象是指绑定请求参数的任何POJO对象；
+   commandClass：表示命令对象实现类，如UserModel；
+   commandName：表示放入请求的命令对象名字（默认command），request.setAttribute(commandName, commandObject);
+
+2、验证功能：提供Validator注册功能，注册的验证器会验证命令对象属性数据是否合法；
+   validators：通过该属性注入验证器，验证器用来验证命令对象属性是否合法；
+
+该抽象类没有没有提供流程功能，只是提供了一些公共的功能，实际使用时需要使用它的子类：
+(1)AbstractCommandController
+(2)AbstractFormController -> SimpleFormController->CancellableFormController, AbstractWizardFormController
+(3)
+
+AbstractCommandController具有两个功能：
+1、将请求参数转换为Command对象。在该Controller中，我们设置一个object对象。然后BaseCommandController将请求的参数进行转换。如果请求参数有value值，就会调用object的的setValue对象来设置对象里的值。如果请求参数中有address.city.就会调用object中getAddress().setCity()方法来赋值。这个object可以是任意的object，唯一的要求就是这个object类没有参数。
+2、对数据进行验证。在转换和验证时发生错误时，需要在handle(request, response, command, errors)中进行处理。
+
+AbstractFormController：
+用于支持带步骤的表单提交的命令控制器基类，使用该控制器可以完成：
+1、定义表单处理（表单的渲染），并从控制器获取命令对象构建表单；
+2、提交表单处理，当用户提交表单内容后，AbstractFormController可以将用户请求的数据绑定到命令对象，并可以验证表单内容、对命令对象进行处理。
+
+SimpleFormController：
+提供了更好的两步表单支持：
+1、准备要展示的数据，并到表单展示页面；
+2、提交数据数据进行处理。
+
+CancellableFormController：
+一个可取消的表单控制器，继承SimpleFormController，额外提供取消表单功能。
+1、表单展示：和SimpleFormController一样；
+2、表单取消：和SimpleFormController一样；
+3、表单成功提交：取消功能处理方法为：onCancel(Object command)，而且默认返回cancelView属性指定的逻辑视图名。
+
+AbstractWizardFormController：
+向导控制器类提供了多步骤（向导）表单的支持（如完善个人资料时分步骤填写基本信息、工作信息、学校信息等）。
+要注意的是当用户跳转到下一个页面时，当前页面的信息是需要保存起来的，还记得AbstractFormController中的sessionForm吗？ 如果为true则表单数据存放到session中，AbstractWizardFormController就是使用了这个特性。
+
+向导中的页码从0开始：
+PARAM_TARGET = "_target"：
+用于选择向导中的要使用的页面参数名前缀，如“_target0”则选择第0个页面显示，即图中的“wizard/baseInfo”，以此类推，如“_target1”将选择第1页面，要得到的页码为去除前缀“_target”后的数字即是；
+
+PARAM_FINISH = "_finish"：
+如果请求参数中有名为“_finish”的参数，表示向导成功结束，将会调用processFinish方法进行完成时的功能处理；
+
+PARAM_CANCEL = "_cancel"：
+如果请求参数中有名为“_cancel”的参数，表示向导被取消，将会调用processCancel方法进行取消时的功能处理；
+
+向导中的命令对象：
+向导中的每一个步骤都会把相关的参数绑定到命令对象，该表单对象默认放置在session中，从而可以跨越多次请求得到该命令对象。

@@ -1,0 +1,104 @@
+MultiActionController，用于支持在一个控制器里添加多个功能处理方法，即将多个请求的处理方法放置到一个控制器里。
+
+Spring Web MVC提供了MethodNameResolver（方法名解析器）用于解析当前请求到需要执行的功能处理方法的方法名。
+默认使用InternalPathMethodNameResolver实现类，另外还提供了ParameterMethodNameResolver和PropertiesMethodNameResolver。
+
+功能处理方法的写法：
+public (ModelAndView | Map | String | void) actionName(HttpServletRequest request, HttpServletResponse response, [,HttpSession session] [,AnyObject]);
+
+只需要按照如上格式写我们的功能处理方法即可；此处需要注意一下几点：
+1、返回值：即模型和视图部分；
+ModelAndView：模型和视图部分，之前已经见过了；
+Map：只返回模型数据，逻辑视图名会根据RequestToViewNameTranslator实现类来计算，稍候讨论；
+String：只返回逻辑视图名；
+void：表示该功能方法直接写出response响应（如果其他返回值类型（如Map）返回null则和void进行相同的处理）；
+
+2、actionName：功能方法名字；由methodNameResolver根据请求信息解析功能方法名，通过反射调用；
+
+3、形参列表：顺序固定，“[]”表示可选，来看看几个示例：
+//表示新增页面
+public ModelAndView toAdd(HttpServletRequest request, HttpServletResponse response);
+
+//表示新增表单提交，在最后可以带着命令对象
+public ModelAndView add(HttpServletRequest request, HttpServletResponse response, UserModel user);
+
+//列表，但只返回模型数据，视图名会通过RequestToViewNameTranslator实现来计算
+public Map list(HttpServletRequest request, HttpServletResponse response);
+
+//文件下载，返回值类型为void，表示该功能方法直接写响应
+public void fileDownload(HttpServletRequest request, HttpServletResponse response)
+
+//第三个参数可以是session
+public ModelAndView sessionWith(HttpServletRequest request, HttpServletResponse response, HttpSession session);
+
+//如果第三个参数是session，那么第四个可以是命令对象，顺序必须是如下顺序
+public void sessionAndCommandWith(HttpServletRequest request, HttpServletResponse response, HttpSession session, UserModel user)
+
+4、异常处理方法，MultiActionController提供了简单的异常处理，即在请求的功能处理过程中遇到异常会交给异常处理方法进行处理，式如下所示：
+public ModelAndView anyMeaningfullName(HttpServletRequest request, HttpServletResponse response, ExceptionClass exception)
+MultiActionController会使用最接近的异常类型来匹配对应的异常处理方法，示例如下所示：
+
+//处理PayException
+public ModelAndView processPayException(HttpServletRequest request, HttpServletResponse response, PayException ex)
+
+//处理Exception
+public ModelAndView processException(HttpServletRequest request, HttpServletResponse response,  Exception ex)
+
+
+-------------MethodNameResolver：解析请求到功能处理方法的方法名。
+(1)InternalPathMethodNameResolver：
+MultiActionController的默认实现，提供从请求URL路径解析功能方法的方法名，从请求的最后一个路径（/）开始，并忽略扩展名；如请求URL是“/user/list.html”，则解析的功能处理方法名为“list”，即调用list方法。该解析器还可以指定前缀和后缀，通过prefix和suffix属性，如指定prefix=”test_”,则功能方法名将变为test_list；
+
+(2)ParameterMethodNameResolver：
+如有下面的配置：
+<property name="methodParamNames" value="list,create,update"/>
+如上配置时，如果请求中含有参数名list、create、update时，则功能处理方法名为list、create、update，这种方式的可以在当一个表单有多个提交按钮时使用，不同的提交按钮名字不一样即可。
+
+<bean id="parameterMethodNameResolver"
+      class="org.springframework.web.servlet.mvc.multiaction.ParameterMethodNameResolver">
+    <!-- 1、根据请求参数名解析功能方法名 -->
+    <property name="methodParamNames" value="create,update,delete"/>
+    <!-- 2、根据请求参数名的值解析功能方法名 -->
+    <property name="paramName" value="action"/>
+    <!-- 3、逻辑方法名到真实方法名的映射 -->
+    <property name="logicalMappings">
+        <props>
+            <prop key="doList">list</prop>
+        </props>
+    </property>
+    <!--4、默认执行的功能处理方法 -->
+    <property name="defaultMethodName" value="list"/>
+</bean>
+1、methodParamNames：create,update,delete，当请求中有参数名为这三个的将被映射为功能方法名，如“<input type="submit"name="create" value="新增"/>”提交后解析得到的功能方法名为create;
+2、paramName：当请求中有参数名为action，则将值映射为功能方法名，如“<input type="hidden" name="action" value="delete"/>”，提交后解析得到的功能方法名为delete；
+3、logicalMappings：逻辑功能方法名到真实功能方法名的映射，如：
+    http://localhost:9080/springmvc-chapter4/user2?action=doList；
+    首先请求参数“action=doList”，则第二步解析得到逻辑功能方法名为doList；
+    本步骤会把doList再转换为真实的功能方法名list。
+4、defaultMethodName：以上步骤如果没有解析到功能处理方法名，默认执行的方法名。
+
+
+(3)PropertiesMethodNameResolver：
+提供自定义的从请求URL解析功能方法的方法名，使用一组用户自定义的模式到功能方法名的映射，映射使用Properties对象存放。
+<bean id="propertiesMethodNameResolver"
+class="org.springframework.web.servlet.mvc.multiaction.PropertiesMethodNameResolver">
+    <property name="mappings">
+        <props>
+              <prop key="/user/create">create</prop>
+              <prop key="/user/update">update</prop>
+              <prop key="/user/delete">delete</prop>
+              <prop key="/user/list">list</prop>
+              <!-- 默认的行为 -->
+              <prop key="/user/**">list</prop>
+        </props>
+    </property>
+</bean>
+
+对于"web上下文/user/create"请求将调用create方法，Spring内部使用PathMatcher进行匹配（默认实现是AntPathMatcher）。
+
+
+--------------------RequestToViewNameTranslator：用于直接将请求转换为逻辑视图名。默认实现为DefaultRequestToViewNameTranslator。
+(1)DefaultRequestToViewNameTranslator：将请求URL转换为逻辑视图名，默认规则如下：
+  http://localhost:9080/web上下文/list -------> 逻辑视图名为list
+  http://localhost:9080/web上下文/list.html -------> 逻辑视图名为list(默认删除扩展名)
+  http://localhost:9080/web上下文/user/list.html -------> 逻辑视图名为user/list

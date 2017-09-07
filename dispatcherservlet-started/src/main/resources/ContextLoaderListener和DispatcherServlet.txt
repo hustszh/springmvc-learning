@@ -1,0 +1,8 @@
+ContextLoaderListener初始化的上下文加载的Bean是对于整个应用程序共享的，
+不管是使用什么表现层技术，一般如DAO层、Service层Bean；
+
+当请求到达你的服务器后，首先会被SpringMVC注册在web.xml中的前端转发器DispatcherServlet接收，
+DispatcherServlet是一个标准的Servlet，它的作用是接受和转发web请求到内部框架处理单元。
+
+DispatcherServlet初始化的上下文加载的Bean是只对Spring Web MVC有效的Bean，
+如Controller、HandlerMapping、HandlerAdapter等等，该初始化上下文应该只加载Web相关组件。

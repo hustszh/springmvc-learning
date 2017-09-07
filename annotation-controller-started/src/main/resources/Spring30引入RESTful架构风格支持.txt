@@ -1,0 +1,7 @@
+@CookieValue：cookie数据到处理器功能处理方法的方法参数上的绑定；
+@RequestHeader：请求头（header）数据到处理器功能处理方法的方法参数上的绑定；
+@RequestBody：请求的body体的绑定（通过HttpMessageConverter进行类型转换）；
+@ResponseBody：处理器功能处理方法的返回值作为响应体（通过HttpMessageConverter进行类型转换）；
+@ResponseStatus：定义处理器功能处理方法/异常处理器返回的状态码和原因；
+@ExceptionHandler：注解式声明异常处理器；
+@PathVariable：请求URI中的模板变量部分到处理器功能处理方法的方法参数上的绑定，从而支持RESTful架构风格的URI；

@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd
+	http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd">
+
+    <!-- HandlerMapping -->
+    <!-- BeanNameUrlHandlerMapping：表示将请求的URL和Bean名字映射，如URL为 “上下文/hello”，则Spring配置文件必须有一个名字为“/hello”的Bean，上下文默认忽略。-->
+    <bean class="org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping"/>
+
+    <!-- HandlerAdapter -->
+    <!-- SimpleControllerHandlerAdapter：表示所有实现了org.springframework.web.servlet.mvc.Controller接口的Bean可以作为Spring Web MVC中的处理器。如果需要其他类型的处理器可以通过实现HandlerAdapter来解决。 -->
+    <bean class="org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter"/>
+
+    <!-- ViewResolver -->
+    <!-- InternalResourceViewResolver：用于支持Servlet、JSP视图解析；
+            viewClass：JstlView表示JSP模板页面需要使用JSTL标签库，classpath中必须包含jstl的相关jar包；
+            prefix和suffix：查找视图页面的前缀和后缀（前缀[逻辑视图名]后缀），比如传进来的逻辑视图名为hello，则该该jsp视图页面应该存放在“WEB-INF/jsp/hello.jsp”； -->
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+        <property name="prefix" value="/WEB-INF/jsp/"/>
+        <property name="suffix" value=".jsp"/>
+    </bean>
+
+    <!-- 处理器 -->
+    <bean name="/hello" class="me.ranjit.springmvc.controller.HelloController"/>
+    <bean name="/without" class="me.ranjit.springmvc.controller.HelloWithoutReturnController"/>
+    <bean name="/helloWithPost" class="me.ranjit.springmvc.controller.HelloController">
+        <property name="supportedMethods" value="POST"/>
+    </bean>
+    <bean name="/helloRequireSession" class="me.ranjit.springmvc.controller.HelloController">
+        <property name="requireSession" value="true"/>
+    </bean>
+    <bean name="/helloCache" class="me.ranjit.springmvc.controller.HelloCacheController">
+        <property name="cacheSeconds" value="0"/>
+    </bean>
+    <bean name="/helloLastMod" class="me.ranjit.springmvc.controller.HelloLastModifiedCacheController"/>
+
+    <!-- 将接收到的请求转发到一个命名的servlet -->
+    <bean name="/forwardToServlet" class="org.springframework.web.servlet.mvc.ServletForwardingController">
+        <property name="servletName" value="ForwardingServlet"></property>
+    </bean>
+
+    <bean name="/abstractCommand" class="me.ranjit.springmvc.controller.HelloAbstractCommandController">
+        <!-- 也可以通过代码注入命令的实现类 -->
+        <!--<property name="commandClass" value="me.ranjit.springmvc.model.UserModel"/>-->
+    </bean>
+
+    <bean name="/simpleForm" class="me.ranjit.springmvc.controller.HelloSimpleFormController">
+        <!--
+        formView：表示展示表单时显示的页面；
+        successView：表示处理成功时显示的页面；“redirect:/success”表示成功处理后重定向到/success控制器；防止表单重复提交；
+        -->
+        <property name="formView" value="register"/>
+        <!--<property name="successView" value="redirect:/success"/>-->
+    </bean>
+
+    <bean name="/canCancelForm" class="me.ranjit.springmvc.controller.HelloCancellableFormController">
+        <property name="formView" value="register"/>
+        <property name="cancelView" value="cancel"/>
+    </bean>
+
+    <bean name="/wizardForm" class="me.ranjit.springmvc.controller.HelloWizardFormController">
+        <property name="pages">
+            <list>
+                <value>wizard/baseInfo</value>
+                <value>wizard/schoolInfo</value>
+                <value>wizard/workInfo</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="userService" class="me.ranjit.springmvc.service.impl.UserServiceImpl"/>
+
+    <!-- MultiActionController用法 -->
+    <bean name="/multi/**" class="me.ranjit.springmvc.controller.HelloMultiActionController">
+        <property name="userService" ref="userService"/>
+        <property name="createView" value="multi/create"/>
+        <property name="updateView" value="multi/update"/>
+        <property name="deleteView" value="multi/delete"/>
+        <property name="listView" value="multi/list"/>
+        <property name="redirectToListView" value="redirect:/multi/list"/>
+        <!-- 默认使用InternalPathMethodNameResolver解析请求URL到功能方法名 -->
+        <!-- 使用PropertiesMethodNameResolver来解析功能处理方法名 -->
+        <property name="methodNameResolver" ref="propertiesMethodNameResolver"/>
+    </bean>
+    <bean id="propertiesMethodNameResolver"
+          class="org.springframework.web.servlet.mvc.multiaction.PropertiesMethodNameResolver">
+        <property name="mappings">
+            <props>
+                <prop key="/multi/create">create</prop>
+                <prop key="/multi/update">update</prop>
+                <prop key="/multi/delete">delete</prop>
+                <prop key="/multi/list">list</prop>
+                <prop key="/multi/**">list</prop><!-- 默认的行为 -->
+            </props>
+        </property>
+    </bean>
+
+    <!-- MultiActionController的委托方式实现-->
+    <!--委托对象-->
+    <bean id="userDelegate" class="me.ranjit.springmvc.delegate.HelloDelegate">
+        <property name="userService" ref="userService"/>
+        <property name="createView" value="delegate/create"/>
+        <property name="updateView" value="delegate/update"/>
+        <property name="deleteView" value="delegate/delete"/>
+        <property name="listView" value="delegate/list"/>
+        <property name="redirectToListView" value="redirect:/delegate/list"/>
+    </bean>
+    <!--控制器对象-->
+    <bean name="/delegate/**"
+          class="org.springframework.web.servlet.mvc.multiaction.MultiActionController">
+        <property name="delegate" ref="userDelegate"/>
+        <property name="methodNameResolver" ref="parameterMethodNameResolver"/>
+    </bean>
+    <!--ParameterMethodNameResolver -->
+    <bean id="parameterMethodNameResolver"
+          class="org.springframework.web.servlet.mvc.multiaction.ParameterMethodNameResolver">
+        <!-- 1、根据请求参数名解析功能方法名 -->
+        <property name="methodParamNames" value="create,update,delete"/>
+        <!-- 2、根据请求参数名的值解析功能方法名 -->
+        <property name="paramName" value="action"/>
+        <!-- 3、逻辑方法名到真实方法名的映射 -->
+        <property name="logicalMappings">
+            <props>
+                <prop key="doList">list</prop>
+            </props>
+        </property>
+        <!--4、默认执行的功能处理方法 -->
+        <property name="defaultMethodName" value="list"/>
+    </bean>
+
+    <bean name="/dataBind" class="me.ranjit.springmvc.controller.HelloDataBinderController"/>
+
+    <!--
+    messageSource：用于获取错误码对应的错误消息的，而且bean名字默认必须是messageSource。
+    ReloadableResourceBundleMessageSource加载时,默认使用DefaultResourceLoader,
+    先判断资源path是否带有classpath:前缀,如果有,用 ClassPathResource去加载资源文件,
+    如果没有试着用文件协议的url去访问,再没有就在contextPath即WEB-INF下查找。
+    -->
+    <bean id="messageSource"
+          class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+        <property name="basenames">
+            <list>
+                <value>classpath:messages</value>
+            </list>
+        </property>
+        <property name="fileEncodings" value="utf-8"/>
+        <property name="cacheSeconds" value="120"/>
+    </bean>
+
+    <bean name="/error" class="me.ranjit.springmvc.controller.HelloErrorController"/>
+
+    <bean name="/dataBindError"
+          class="me.ranjit.springmvc.controller.HelloDataBinderErrorController">
+        <property name="formView" value="bind/input"/>
+        <property name="successView" value="bind/success"/>
+    </bean>
+
+    <bean id="userModelValidator"
+          class="me.ranjit.springmvc.support.validator.UserModelValidator"/>
+    <bean name="/validator"
+          class="me.ranjit.springmvc.controller.HelloSimpleFormController">
+        <property name="formView" value="validator/register"/>
+        <property name="successView" value="validator/success"/>
+        <property name="validator" ref="userModelValidator"/>
+    </bean>
+</beans>
