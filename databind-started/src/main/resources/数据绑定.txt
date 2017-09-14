@@ -1,0 +1,76 @@
+1.@RequestParam：用于将请求参数区数据映射到功能处理方法的参数上。
+@RequestParam注解主要有哪些参数：
+value：参数名字，即入参的请求参数名字，如username表示请求的参数区中的名字为username的参数的值将传入；
+required：是否必须，默认是true，表示请求中一定要有相应的参数，否则将报404错误码；
+defaultValue：默认值，表示如果请求中没有同名参数时的默认值，默认值可以是SpEL表达式，如“#{systemProperties['java.vm.version']}”。
+
+如果请求中有多个同名的应该如何接收呢？如给用户授权时，可能授予多个权限，首先看下如下代码：
+public String requestparam7(@RequestParam(value="role") String roleList)
+如果请求参数类似于url?role=admin&role=user，则实际roleList参数入参的数据为“admin,user”，
+即多个数据之间使用“，”分割；
+
+我们应该使用如下方式来接收多个请求参数：
+public String requestparam7(@RequestParam(value="role") String[] roleList)
+或
+public String requestparam8(@RequestParam(value="role") List<String> list)
+
+2.PathVariable：用于将请求URL中的模板变量映射到功能处理方法的参数上。
+@RequestMapping(value="/users/{userId}/topics/{topicId}")
+public String test(
+       @PathVariable(value="userId") int userId,
+       @PathVariable(value="topicId") int topicId)
+ 如请求的URL为“控制器URL/users/123/topics/456”，则自动将URL中模板变量{userId}和{topicId}绑定到
+ 通过@PathVariable注解的同名参数上，即入参后userId=123、topicId=456。
+
+3.@CookieValue：用于将请求的Cookie数据映射到功能处理方法的参数上。
+public String test(@CookieValue(value="JSESSIONID", defaultValue="") String sessionId)
+如上配置将自动将JSESSIONID值入参到sessionId参数上，defaultValue表示Cookie中没有JSESSIONID时默认为空。
+
+public String test2(@CookieValue(value="JSESSIONID", defaultValue="") Cookie sessionId)
+传入参数类型也可以是javax.servlet.http.Cookie类型。
+
+4.@RequestHeader：用于将请求的头信息区数据映射到功能处理方法的参数上。
+  @RequestMapping(value="/header")
+  public String test(
+         @RequestHeader("User-Agent") String userAgent,
+         @RequestHeader(value="Accept") String[] accepts)
+
+  如上配置将自动将请求头“User-Agent”值入参到userAgent参数上，并将“Accept”请求头值入参到accepts参数上。
+
+5.@ModelAttribute一个具有如下三个作用：
+(1)绑定请求参数到命令对象：放在功能处理方法的入参上时，用于将多个请求参数绑定到一个命令对象，从而简化绑定流程，而且自动暴露为模型数据用于视图页面展示时使用；
+(2)暴露表单引用对象为模型数据：放在处理器的一般方法（非功能处理方法）上时，是为表单准备要展示的表单引用对象，如注册时需要选择的所在城市等，而且在执行功能处理方法（@RequestMapping注解的方法）之前，自动添加到模型对象中，用于视图页面展示时使用；
+(3)暴露@RequestMapping方法返回值为模型数据：放在功能处理方法的返回值上时，是暴露功能处理方法的返回值为模型数据，用于视图页面展示时使用。
+
+(1)绑定请求参数到命令对象
+public String test1(@ModelAttribute("user") UserModel user)
+它的作用是将该绑定的命令对象以“user”为名称添加到模型对象中供视图页面展示使用。
+如请求参数包含“?username=aaa&password=123”会自动绑定到user对象中的username属性和password属性。
+我们此时可以在视图页面使用${user.username}来获取绑定的命令对象的属性。
+
+绑定请求参数到命令对象支持对象图导航式的绑定，如请求参数包含“?username=zhang&password=123&workInfo.city=bj”自动绑定到user中的workInfo属性的city属性中。
+
+(2)暴露表单引用对象为模型数据
+位于处理器的一般方法（非功能处理方法）上。
+
+(3)暴露@RequestMapping方法返回值为模型数据
+public @ModelAttribute("user2") UserModel test3(@ModelAttribute("user2") UserModel user)
+可以看到返回值类型是命令对象类型，而且通过@ModelAttribute("user2")注解，此时会暴露返回值到模型数据（名字为user2）中供视图展示使用。
+
+6.@Value：用于将一个SpEL表达式结果映射到到功能处理方法的参数上。
+public String test(@Value("(#{systemProperties['java.vm.version']}") String jvmVersion)
+
+也可以用于将配置文件的属性值绑定类的属性上：
+@Value("${hostname:'localhost'}")
+
+7.@SessionAttributes绑定命令对象到session
+默认情况下Spring MVC将模型中的数据存储到request域中。当一个请求结束后，数据就失效了。如果要跨页面使用，
+那么需要使用到session。而@SessionAttributes注解就可以使得模型中的数据存储一份到session域中，实现 Session 信息的共享。
+
+有时候我们需要在“多次请求”之间保持数据，一般情况需要我们明确的调用HttpSession的API来存取会话数据，如多步骤提交的表单。
+Spring Web MVC提供了@SessionAttributes进行请求间透明的存取会话数据。
+
+@SessionAttributes注解只能在类上使用，不能在方法上使用
+@SessionAttributes参数：
+(1)value：这是一个字符串数组。里面应写需要存储到session中数据的名称。
+(2)types：根据指定参数的类型，将模型中对应类型的参数存储到session中

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+                            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+    <!--Spring3.1开始的注解 HandlerMapping -->
+    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping"/>
+    <!--Spring3.1开始的注解 HandlerAdapter -->
+    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter"/>
+
+    <!-- ViewResolver -->
+    <!-- InternalResourceViewResolver：用于支持Servlet、JSP视图解析；
+            viewClass：JstlView表示JSP模板页面需要使用JSTL标签库，classpath中必须包含jstl的相关jar包；
+            prefix和suffix：查找视图页面的前缀和后缀（前缀[逻辑视图名]后缀），比如传进来的逻辑视图名为hello，则该该jsp视图页面应该存放在“WEB-INF/jsp/hello.jsp”； -->
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+        <property name="prefix" value="/WEB-INF/jsp/"/>
+        <property name="suffix" value=".jsp"/>
+    </bean>
+
+    <context:component-scan base-package="me.ranjit.springmvc.databind.server.controller" />
+    <!--<bean class="me.ranjit.springmvc.databind.server.controller.RequestParamController"/>-->
+    <!--<bean class="me.ranjit.springmvc.databind.server.controller.PathVariableController"/>-->
+    <!--<bean class="me.ranjit.springmvc.databind.server.controller.CookieValueController"/>-->
+    <!--<bean class="me.ranjit.springmvc.databind.server.controller.RequestHeaderController"/>-->
+    <!--<bean class="me.ranjit.springmvc.databind.server.controller.ModelAttributeController"/>-->
+    <!--<bean class="me.ranjit.springmvc.databind.server.controller.ValueController"/>-->
+
+    <!--<bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer">-->
+        <!--<property name="properties" ref="configProperties"/>-->
+    <!--</bean>-->
+    <!--<bean id="configProperties" class="org.springframework.beans.factory.config.PropertiesFactoryBean">-->
+        <!--<property name="locations">-->
+            <!--<list>-->
+                <!--<value>classpath*:/config.properties</value>-->
+            <!--</list>-->
+        <!--</property>-->
+    <!--</bean>-->
+    <context:property-placeholder ignore-unresolvable="true"
+                                  location="classpath*:/config.properties" />
+
+</beans>

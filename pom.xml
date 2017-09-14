@@ -15,6 +15,7 @@
         <module>interceptor-started</module>
         <module>annotation-controller-started</module>
         <module>content-type-started</module>
+        <module>databind-started</module>
     </modules>
 
     <properties>
